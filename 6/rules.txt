@@ -1,0 +1,63 @@
+
+// simulating a predator that chases prey
+// physics: 
+/*
+ranges are cones. prey have smaller cones while predators larger ones.
+
+predator and prey have visible ranges.
+predator has larger visible range -  can see prey from afar.
+prey - smaller
+
+predator lies dormant until it sees prey in its range
+predator initiates stalking (slowly move toward prey)
+
+prey moves at fast speed when it sees predator in its range.
+
+predator has attacking range (smaller than its visible range)
+in this range it springs forward kill the prey (achieved when it enters the kill range of the prey)
+
+prey kill range
+roughly the size of the prey itself. 
+if predator is in this range the prey dies.
+*/
+===========================================================================================================
+VELCOCITY
+===========================================================================================================
+cos(theta) - horizontal angle
+sin(theta) - vertical angle
+
+speed * cos(theta) = new postion in x
+speed * sin(theta) = new postion in y
+
+speed = 5 units per time frame. 5/s
+
+your working with pixels so e.g 1 pixel per second.
+
+
+you want to move from point A to B
+move in the x direction a certain amount. 
+move in the y direction a certain amount. 
+
+the hypotenuse is the magnitude/speed. its how far you move.
+so lets say in one second you should 5 pixels.
+
+3 parts of a RIGHT ANGLED TRIANGLE
+- hypotenuse, opposite, adjacent
+
+hypotenuse = 5 
+adjacent
+opposite
+
+adjacent = CAH
+
+cos(theta) = adjacnet/hypotenuse.
+
+opposite = SOH 
+
+sin(theta) = opposite/hypotenuse.
+
+
+velcoty x = cos(theta) * speed/magnitude
+velocity y = sin(theta) * speed/magnitude
+
+
