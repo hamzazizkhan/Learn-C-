@@ -30,8 +30,8 @@ int main(){
 
         sf::VertexArray shape(sf::PrimitiveType::LineStrip, 3);
 
-        shape[0].position = {0.f, 50.f};
-        shape[1].position = {25.f, 0.f};
+        shape[0].position = {0.f, 50.f}; // left bottom 
+        shape[1].position = {25.f, 0.f}; // top point - should be head
         shape[2].position = {50.f, 50.f};
 
         window.draw(shape);

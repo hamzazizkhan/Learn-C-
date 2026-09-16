@@ -1,8 +1,8 @@
-
-// simulating a predator that chases prey
-// physics: 
-/*
-ranges are cones. prey have smaller cones while predators larger ones.
+===========================================================================================================
+PREDATOR
+===========================================================================================================
+visible ranges are cones on a 2D plane. 
+prey have smaller cones while predators larger ones.
 
 predator and prey have visible ranges.
 predator has larger visible range -  can see prey from afar.
@@ -19,7 +19,6 @@ in this range it springs forward kill the prey (achieved when it enters the kill
 prey kill range
 roughly the size of the prey itself. 
 if predator is in this range the prey dies.
-*/
 ===========================================================================================================
 VELCOCITY
 ===========================================================================================================
@@ -61,3 +60,7 @@ velcoty x = cos(theta) * speed/magnitude
 velocity y = sin(theta) * speed/magnitude
 
 
+
+===========================================================================================================
+MEMORY RULES 
+===========================================================================================================

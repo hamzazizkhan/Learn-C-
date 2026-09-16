@@ -29,9 +29,9 @@ constexpr int32_t Divide(int32_t num1, int32_t num2){
 
 constexpr int32_t turnfactor = ConvertToInt(0.2);         // Raw int: 13107
 int leftmargin {ConvertToInt(100.0)};
-int bottommargin {ConvertToInt(100.0)};
+int bottommargin {ConvertToInt(500.0)};
 int rightmargin {ConvertToInt(700.0)};
-int topmargin {ConvertToInt(500.0)};
+int topmargin {ConvertToInt(100.0)};
 
 // int32_t angle = ConvertToInt(45.0); 
 // // top right.
@@ -42,113 +42,224 @@ int topmargin {ConvertToInt(500.0)};
 
 // predator class
 class predator{
+private:
+    void ScreenEdge(){
+        if ( x < leftmargin )
+    { 
+            vx = vx + turnfactor;
+    }
+        if ( x > rightmargin )
+    { 
+            vx = vx - turnfactor;
+    }
+        if ( y > bottommargin )
+    { 
+            vy = vy - turnfactor;
+    }
+        if ( y < topmargin )
+    { 
+            vy = vy + turnfactor;
+    }
+    }
+
+    void SetRotation(){
+        this->left_rot_x = 
+            this->left_x * cos(this->angle) - 
+            this->left_y * sin(this->angle);
+
+        this->left_rot_y =
+            this->left_x * sin(this->angle) +
+            this->left_y * cos(this->angle);
+
+        // Right wing
+        this->right_rot_x =
+            this->right_x * cos(this->angle) -
+            this->right_y * sin(this->angle);
+
+        this->right_rot_y =
+            this->right_x * sin(this->angle) +
+            this->right_y * cos(this->angle);
+    }
+
+    double GenerateRandomAngle(){
+        std::random_device rd;
+        std::mt19937 gen(rd());
+
+        std::uniform_real_distribution<> dist(0.0, 360.0);
+
+        double angle = dist(gen);
+        double radians = angle * M_PI / 180.0;
+
+        return radians;
+    }
+
+    double AngleRadians(double angle_degrees){
+        double radians = angle_degrees * M_PI / 180.0;
+        return radians;
+    }
+
+    void PrivateUpdateVelocity(){
+        vx = Multiply( ConvertToInt(cos(angle)) , speed);
+        vy = Multiply(ConvertToInt(sin(angle)) , speed);
+        std::cout << "velocity update " << vx << " " << vy << "\n";
+    }
+
 public:
+    double width;
+    double height;
+    double left_x;
+    double left_y;
+    double right_x;
+    double right_y;
+    double left_rot_x;
+    double left_rot_y;
+    double right_rot_x;
+    double right_rot_y;
+    double angle;
+    double constant_angle;
+
+    int32_t speed;
     int32_t x;
     int32_t y;
     int32_t vx;
     int32_t vy;
-    int32_t angle;
-    int32_t speed = ConvertToInt(1.0);
-    float width = 25.0;
-    float height = 25.0;
+
+    bool use_rand_angle;
+
+    predator(int32_t start_x, int32_t start_y, double start_angle, int32_t start_speed):
+    x(start_x),
+    y(start_y),
+    angle(start_angle),
+    speed(start_speed),
+    left_x(-25.0),
+    left_y(25.0),
+    right_x(25.0),
+    right_y(25.0),
+    width(25.0),
+    height(25.0),
+    // testing constant movement
+    constant_angle(-45.0),
+    use_rand_angle(false)
+
+    {
+        SetRotation();
+        PrivateUpdateVelocity();
+        constant_angle = AngleRadians(constant_angle);
+    }
+
+    void SetX(int32_t new_x){
+        x = new_x; 
+    }
+
+    void SetY(int32_t new_y){
+        y = new_y; 
+    }
+
+    void SetVX(int32_t new_vx){
+        vx = new_vx; 
+    }
+
+    void SetVY(int32_t new_vy){
+        vy = new_vy; 
+    }
+
+    void SetAngle(double new_angle){
+        angle = new_angle; 
+    }
+    
+    void UpdateRandomAngle(){
+        if (use_rand_angle){
+            angle = GenerateRandomAngle();
+            std::cout << "random angle update " << angle;
+        }else{
+            angle = constant_angle;
+            std::cout << "using constant angle " << angle;
+
+        }
+
+    }
+
+    void UpdatePosition(){
+        x = x +vx;
+        y = y +vy;
+
+        std::cout << "postion   update " << x << " " << y << "\n";
+
+    }
+
+    void UpdateVelocity(){
+        PrivateUpdateVelocity();
+    }
+
+    // in frame function:
+    // update angle before this.
+    // update postion should be done before this.
+    void UpdateWingsRotation(){
+        SetRotation();
+    }
+
+    std::vector<double> UpdateWingsPosition()
+    {
+        double predator_x = ConvertToDouble(x);
+        double predator_y = ConvertToDouble(y);
+
+        double right_x_new = predator_x + right_rot_y;
+        double right_y_new = predator_y + right_rot_x;
+
+        double left_x_new = predator_x + left_rot_y;
+        double left_y_new = predator_y + left_rot_x;
+
+        return {
+            right_x_new,
+            right_y_new,
+            left_x_new,
+            left_y_new
+        };
+    }
+
+    sf::VertexArray PredatorShape(){
+
+        double predator_x = ConvertToDouble(x);
+        double predator_y = ConvertToDouble(y); 
+        
+        std::vector<double> positions = UpdateWingsPosition();
+
+        sf::VertexArray shape(sf::PrimitiveType::LineStrip, 3);
+
+        shape[0].position = {static_cast<float>(positions[2]),static_cast<float>(positions[3])};                                             // left bottom
+        shape[1].position = {static_cast<float>(predator_x), static_cast<float>(predator_y)};                            // top point - should be head
+        shape[2].position = {static_cast<float>(positions[0]), static_cast<float>(positions[1])};
+
+        return shape;
+    }
+
+    void frame(){
+        UpdateRandomAngle();
+        UpdateWingsRotation();
+        UpdateVelocity();
+        UpdatePosition();
+        UpdateWingsPosition();
+        ScreenEdge();
+    }
+
+    std::vector<double> ConvertPredatorToDouble(){
+        double dub_x = ConvertToDouble(x);
+        double dub_y = ConvertToDouble(y);
+
+        return std::vector<double> {dub_x, dub_y};
+    }
+
 };
-
-class predator_doubles{
-public:
-    double x;
-    double y;
-    double vx;
-    double vy;
-};
-
-int32_t GenerateRandomInt(double start, double stop){
-    std::random_device rd;
-    std::mt19937 gen(rd());
-
-    std::uniform_real_distribution<> dist(start, stop);
-
-    int32_t x = ConvertToInt(dist(gen));
-
-    return x;
-}
-
-void ScreenEdge(predator &b){
-    if ( b.x < leftmargin )
-{ 
-        b.vx = b.vx + turnfactor;
- }
-    if ( b.x > rightmargin )
-{ 
-        b.vx = b.vx - turnfactor;
- }
-    if ( b.y > bottommargin )
-{ 
-        b.vy = b.vy - turnfactor;
- }
-    if ( b.y < topmargin )
-{ 
-        b.vy = b.vy + turnfactor;
- }
-}
-
-void UpdatePosition(predator &pred){
-    pred.x = pred.x +pred.vx;
-    pred.y = pred.y +pred.vy;
-
-    std::cout << "postion   update " << pred.x << " " << pred.y << "\n";
-
-    ScreenEdge(pred);
-}
-
-void UpdateVelocity(predator &pred){
-
-    pred.vx = Multiply( ConvertToInt(cos(pred.angle)) , pred.speed);
-    pred.vy = Multiply(ConvertToInt(sin(pred.angle)) , pred.speed);
-    std::cout << "velocity update " << pred.vx << " " << pred.vy << "\n";
-}
-
-void UpdateRandomAngle(predator &pred){
-    pred.angle = GenerateRandomInt(0.0, 360.0);
-    std::cout << "angle update " << pred.angle;
-}
-
-void frame(predator &pred){
-    UpdateRandomAngle(pred);
-    UpdateVelocity(pred);
-    UpdatePosition(pred);
-}
-
-predator InitSinglePredator(){
-    std::random_device rd;
-    std::mt19937 gen(rd());
-
-    std::uniform_real_distribution<> dist(0.0, 500.0);
-
-    int32_t x = ConvertToInt(dist(gen));
-    int32_t y = ConvertToInt(dist(gen));
-    int32_t vx = ConvertToInt(dist(gen));
-    int32_t vy = ConvertToInt(dist(gen));
-
-    return predator{x,y,vx,vy};
-}
-
-std::vector<double> ConvertPredatorToDouble(predator pred){
-    double x = ConvertToDouble(pred.x);
-    double y = ConvertToDouble(pred.y);
-    // double vx = ConvertToDouble(pred.vx);
-    // double vy = ConvertToDouble(pred.vy);
-
-    // return predator_doubles{x,y,vx,vy};
-
-    return std::vector<double> {x,y};
-}
-
-
-
 
 int main(){
 
-    predator pred = InitSinglePredator();
+    // predator pred = InitSinglePredator();
+    double init_angle = 45.0;
+    double radians = init_angle * M_PI / 180.0;
+    int32_t init_x = ConvertToInt(400.0);
+    int32_t init_y = ConvertToInt(300.0);
+    int32_t init_speed = ConvertToInt(50.0);
+    predator pred(init_x, init_y, radians, init_speed);
 
 
     sf::RenderWindow window(
@@ -168,18 +279,16 @@ int main(){
         
         window.clear();
 
-        std::vector<double> pred_dubs = ConvertPredatorToDouble(pred);
+        std::vector<double> pred_dubs = pred.ConvertPredatorToDouble();
 
         std::cout << "pred in window " << pred.x << " " << pred.y << "\n";
         // CircleShape, setPosition, draw
-        sf::CircleShape triangle(10.f, 3);
-        triangle.setPosition({
-            sf::Vector2f{static_cast<float>(pred_dubs[0]), static_cast<float>(pred_dubs[1])}
-        });
+        
+        sf::VertexArray shape = pred.PredatorShape();
 
-        window.draw(triangle);
+        window.draw(shape);
 
-        frame(pred);
+        pred.frame();
         std::cout << pred_dubs[0] << " " << pred_dubs[1] << "\n";
 
 
