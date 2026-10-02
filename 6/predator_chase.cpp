@@ -107,14 +107,22 @@ private:
 public:
     double width;
     double height;
-    double left_x;
-    double left_y;
-    double right_x;
-    double right_y;
+
+    const double left_x;
+    const double left_y;
+    const double right_x;
+    const double right_y;
+
+    double left_pos_x;
+    double left_pos_y;
+    double right_pos_x;
+    double right_pos_y;
+
     double left_rot_x;
     double left_rot_y;
     double right_rot_x;
     double right_rot_y;
+
     double angle;
     double constant_angle;
 
@@ -145,6 +153,13 @@ public:
         SetRotation();
         PrivateUpdateVelocity();
         constant_angle = AngleRadians(constant_angle);
+        left_pos_x = ConvertToDouble(x) + left_x;
+        left_pos_y = ConvertToDouble(y) + left_y;
+        right_pos_x = ConvertToDouble(x) + right_x;
+        right_pos_y = ConvertToDouble(y) + right_y;
+        std::cout << "initialisation \n";
+        std::cout << "\n";
+        std::cout << left_pos_x << " " << left_pos_y  << " " << right_pos_x << " " << right_pos_y; 
     }
 
     void SetX(int32_t new_x){
@@ -198,23 +213,17 @@ public:
         SetRotation();
     }
 
-    std::vector<double> UpdateWingsPosition()
+    void UpdateWingsPosition()
     {
         double predator_x = ConvertToDouble(x);
         double predator_y = ConvertToDouble(y);
 
-        double right_x_new = predator_x + right_rot_y;
-        double right_y_new = predator_y + right_rot_x;
+        right_pos_x = predator_x + right_rot_x;
+        right_pos_y = predator_y + right_rot_y;
 
-        double left_x_new = predator_x + left_rot_y;
-        double left_y_new = predator_y + left_rot_x;
+        left_pos_x = predator_x + left_rot_x;
+        left_pos_y = predator_y + left_rot_y;
 
-        return {
-            right_x_new,
-            right_y_new,
-            left_x_new,
-            left_y_new
-        };
     }
 
     sf::VertexArray PredatorShape(){
@@ -222,13 +231,14 @@ public:
         double predator_x = ConvertToDouble(x);
         double predator_y = ConvertToDouble(y); 
         
-        std::vector<double> positions = UpdateWingsPosition();
-
         sf::VertexArray shape(sf::PrimitiveType::LineStrip, 3);
 
-        shape[0].position = {static_cast<float>(positions[2]),static_cast<float>(positions[3])};                                             // left bottom
+        std::cout << "printing wings postions \n";
+        std::cout << left_pos_x << " " << left_pos_y  << " " << right_pos_x << " " << right_pos_y; 
+
+        shape[0].position = {static_cast<float>(left_pos_x),static_cast<float>(left_pos_y)};                                             // left bottom
         shape[1].position = {static_cast<float>(predator_x), static_cast<float>(predator_y)};                            // top point - should be head
-        shape[2].position = {static_cast<float>(positions[0]), static_cast<float>(positions[1])};
+        shape[2].position = {static_cast<float>(right_pos_x), static_cast<float>(right_pos_y)};
 
         return shape;
     }
