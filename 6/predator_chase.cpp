@@ -104,6 +104,7 @@ private:
         std::cout << "velocity update " << vx << " " << vy << "\n";
     }
 
+
 public:
     double width;
     double height;
@@ -213,18 +214,18 @@ public:
         SetRotation();
     }
 
-    void UpdateWingsPosition()
-    {
-        double predator_x = ConvertToDouble(x);
-        double predator_y = ConvertToDouble(y);
+    // void UpdateWingsPosition()
+    // {
+    //     double predator_x = ConvertToDouble(x);
+    //     double predator_y = ConvertToDouble(y);
 
-        right_pos_x = predator_x + right_rot_x;
-        right_pos_y = predator_y + right_rot_y;
+    //     right_pos_x = predator_x + right_rot_x;
+    //     right_pos_y = predator_y + right_rot_y;
 
-        left_pos_x = predator_x + left_rot_x;
-        left_pos_y = predator_y + left_rot_y;
+    //     left_pos_x = predator_x + left_rot_x;
+    //     left_pos_y = predator_y + left_rot_y;
 
-    }
+    // }
 
     sf::VertexArray PredatorShape(){
 
@@ -258,6 +259,32 @@ public:
 
         return std::vector<double> {dub_x, dub_y};
     }
+
+    // new update of wings postion
+    void UpdateWingsPosition(){
+        int32_t backward_vx = -vx;
+        int32_t backward_vy = -vy;
+
+        int32_t perpendicular_vx = vx;
+        int32_t perpendicular_vy = -vy;
+
+        int32_t right_wing_vx = backward_vx + Divide(perpendicular_vx, ConvertToInt(2.0));
+        int32_t right_wing_vy = backward_vy + Divide(perpendicular_vy, ConvertToInt(2.0));
+
+        int32_t left_wing_vx = backward_vx - Divide(perpendicular_vx, ConvertToInt(2.0));
+        int32_t left_wing_vy = backward_vy - Divide(perpendicular_vx, ConvertToInt(2.0));
+
+        right_wing_vx /= ConvertToInt(2.0);
+        right_wing_vy /= ConvertToInt(2.0);
+        left_wing_vx /= ConvertToInt(2.0);
+        left_wing_vy /= ConvertToInt(2.0);
+
+        right_pos_x = ConvertToDouble(x) + right_wing_vx;
+        right_pos_y = ConvertToDouble(y) + right_wing_vy;
+        
+        left_pos_x = ConvertToDouble(x) + left_wing_vx;
+        left_pos_y = ConvertToDouble(y) + left_wing_vy;
+    } 
 
 };
 
