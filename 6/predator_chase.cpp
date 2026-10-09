@@ -40,6 +40,19 @@ int topmargin {ConvertToInt(100.0)};
 // // 5 pixels per second.
 
 
+class static_prey{
+private:
+
+public:
+    int32_t x;
+    int32_t y;
+
+    static_prey(int32_t start_x, int32_t start_y):
+    x(start_x),
+    y(start_y)
+    {}
+};
+
 // predator class
 class predator{
 private:
@@ -299,6 +312,9 @@ int main(){
     predator pred(init_x, init_y, radians, init_speed);
 
 
+    static_prey prey(ConvertToInt(250.0), ConvertToInt(250.0));
+
+
     sf::RenderWindow window(
         sf::VideoMode({800,600}),
         "predator"
@@ -316,6 +332,8 @@ int main(){
         
         window.clear();
 
+
+        // predator
         std::vector<double> pred_dubs = pred.ConvertPredatorToDouble();
 
         std::cout << "pred in window " << pred.x << " " << pred.y << "\n";
@@ -323,7 +341,15 @@ int main(){
         
         sf::VertexArray shape = pred.PredatorShape();
 
+        //prey
+        sf::CircleShape circle_static_prey(20.f);
+
+        sf::Vector2<float> prey_pos = {static_cast<float>(ConvertToDouble(prey.x)),  static_cast<float>(ConvertToDouble(prey.y))};
+        circle_static_prey.setPosition({prey_pos.x, prey_pos.y});   
+
+        // drawing
         window.draw(shape);
+        window.draw(circle_static_prey);
 
         pred.frame();
         std::cout << pred_dubs[0] << " " << pred_dubs[1] << "\n";
