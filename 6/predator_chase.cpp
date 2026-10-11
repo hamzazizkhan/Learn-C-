@@ -81,8 +81,8 @@ private:
 
         std::uniform_real_distribution<float> dist(0.0f, 360.0f);
 
-        float angle = dist(gen);
-        float radians = angle * M_PI / 180.0f;
+        float new_angle = dist(gen);
+        float radians = new_angle * M_PI / 180.0f;
 
         return radians;
     }
@@ -98,7 +98,7 @@ private:
         vx = std::cos(angle) * speed;
         vy = std::sin(angle) * speed;
 
-        std::cout << "velocity update " << vx << " " << vy << "\n";
+        // std::cout << "velocity update " << vx << " " << vy << "\n";
     }
 
 public:
@@ -137,20 +137,19 @@ public:
                                                                                    y(start_y),
                                                                                    angle(start_angle),
                                                                                    speed(start_speed),
+                                                                                    constant_angle(start_angle),
                                                                                    left_x(-25.0f),
                                                                                    left_y(25.0f),
                                                                                    right_x(25.0f),
                                                                                    right_y(25.0f),
                                                                                    width(25.0f),
                                                                                    height(25.0f),
-                                                                                   constant_angle(angle),
                                                                                    use_rand_angle(false),
                                                                                    wing_size(30.0f)
     {
         SetRotation();
         PrivateUpdateVelocity();
 
-        constant_angle = AngleRadians(constant_angle);
 
         left_pos_x = x + left_x;
         left_pos_y = y + left_y;
@@ -158,14 +157,14 @@ public:
         right_pos_x = x + right_x;
         right_pos_y = y + right_y;
 
-        std::cout << "initialisation \n";
-        std::cout << "\n";
+        // std::cout << "initialisation \n";
+        // std::cout << "\n";
 
-        std::cout
-            << left_pos_x << " "
-            << left_pos_y << " "
-            << right_pos_x << " "
-            << right_pos_y;
+        // std::cout
+        //     << left_pos_x << " "
+        //     << left_pos_y << " "
+        //     << right_pos_x << " "
+        //     << right_pos_y;
     }
 
     void SetX(float new_x)
@@ -198,12 +197,7 @@ public:
         if (use_rand_angle)
         {
             angle = GenerateRandomAngle();
-            std::cout << "random angle update " << angle;
-        }
-        else
-        {
-            angle = constant_angle;
-            std::cout << "using constant angle " << angle;
+            // std::cout << "random angle update " << angle;
         }
     }
 
@@ -212,7 +206,7 @@ public:
         x = x + vx;
         y = y + vy;
 
-        std::cout << "postion update " << x << " " << y << "\n";
+        // std::cout << "postion update " << x << " " << y << "\n";
     }
 
     void UpdateVelocity()
@@ -236,13 +230,13 @@ public:
 
         sf::VertexArray shape(sf::PrimitiveType::LineStrip, 3);
 
-        std::cout << "printing wings postions \n";
+        // std::cout << "printing wings postions \n";
 
-        std::cout
-            << left_pos_x << " "
-            << left_pos_y << " "
-            << right_pos_x << " "
-            << right_pos_y;
+        // std::cout
+        //     << left_pos_x << " "
+        //     << left_pos_y << " "
+        //     << right_pos_x << " "
+        //     << right_pos_y;
 
         shape[0].position = {left_pos_x, left_pos_y};
         shape[1].position = {predator_x, predator_y};
@@ -273,11 +267,14 @@ public:
     void UpdateWingsPosition()
     {
 
-        float backward_vx = -vx;
-        float backward_vy = -vy;
+        float normalised_vx = vx/speed; 
+        float normalised_vy = vy/speed; 
 
-        float perpendicular_vx = vx;
-        float perpendicular_vy = -vy;
+        float backward_vx = -normalised_vx;
+        float backward_vy = -normalised_vy;
+
+        float perpendicular_vx = normalised_vy;
+        float perpendicular_vy = -normalised_vx;
 
         float right_wing_vx = backward_vx + perpendicular_vx;
         float right_wing_vy = backward_vy + perpendicular_vy;
@@ -285,74 +282,23 @@ public:
         float left_wing_vx = backward_vx - perpendicular_vx;
         float left_wing_vy = backward_vy - perpendicular_vy;
 
-        bool right_wing_vx_bool = std::signbit(right_wing_vx);
-        bool right_wing_vy_bool = std::signbit(right_wing_vy);
+        right_pos_x = x + (right_wing_vx * wing_size);
+        right_pos_y = y + (right_wing_vy * wing_size);
 
-        bool left_wing_vx_bool = std::signbit(left_wing_vx);
-        bool left_wing_vy_bool = std::signbit(left_wing_vy);
-
-        float new_wing_size_right_vx = wing_size;
-        float new_wing_size_right_vy = wing_size;
-        float new_wing_size_left_vx = wing_size;
-        float new_wing_size_left_vy = wing_size;
-
-        if (right_wing_vx == 0)
-        {
-            new_wing_size_right_vx = 0;
-        }
-
-        if (right_wing_vy == 0)
-        {
-            new_wing_size_right_vy = 0;
-        }
-
-        if (left_wing_vx == 0)
-        {
-            new_wing_size_left_vx = 0;
-        }
-
-        if (left_wing_vy == 0)
-        {
-            new_wing_size_left_vy = 0;
-        }
-
-        if (right_wing_vx_bool == true)
-        {
-            new_wing_size_right_vx = -wing_size;
-        }
-
-        if (right_wing_vy_bool == true)
-        {
-            new_wing_size_right_vy = -wing_size;
-        }
-
-        if (left_wing_vx_bool == true)
-        {
-            new_wing_size_left_vx = -wing_size;
-        }
-
-        if (left_wing_vy_bool == true)
-        {
-            new_wing_size_left_vy = -wing_size;
-        }
-
-        right_pos_x = x + new_wing_size_right_vx;
-        right_pos_y = y + new_wing_size_right_vy;
-
-        left_pos_x = x + new_wing_size_left_vx;
-        left_pos_y = y + new_wing_size_left_vy;
+        left_pos_x =  x + (left_wing_vx  * wing_size);
+        left_pos_y =  y + (left_wing_vy  * wing_size);
     }
 };
 
 int main()
 {
 
-    float init_angle = 180.0f;
+    float init_angle = 145.0f;
     float radians = init_angle * M_PI / 180.0f;
 
     float init_x = 400.0f;
     float init_y = 300.0f;
-    float init_speed = 49.0f;
+    float init_speed = 1.0f;
 
     predator pred(init_x, init_y, radians, init_speed);
 
@@ -362,7 +308,7 @@ int main()
         sf::VideoMode({800, 600}),
         "predator");
 
-    window.setFramerateLimit(4);
+    window.setFramerateLimit(100);
 
     while (window.isOpen())
     {
@@ -377,9 +323,9 @@ int main()
         // predator
         std::vector<float> pred_dubs = pred.ConvertPredatorToDouble();
 
-        std::cout << "pred in window "
-                  << pred.x << " "
-                  << pred.y << "\n";
+        // std::cout << "pred in window "
+        //           << pred.x << " "
+        //           << pred.y << "\n";
 
         sf::VertexArray shape = pred.PredatorShape();
 
@@ -399,9 +345,9 @@ int main()
 
         pred.frame();
 
-        std::cout
-            << pred_dubs[0] << " "
-            << pred_dubs[1] << "\n";
+        // std::cout
+        //     << pred_dubs[0] << " "
+        //     << pred_dubs[1] << "\n";
 
         window.display();
     }
