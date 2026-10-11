@@ -3,261 +3,256 @@
 #include <SFML/Graphics.hpp>
 #include <cmath>
 #include <vector>
-#include <cstdint>
 #include <random>
 #include <optional>
 
-constexpr int FRACTIONAL_BITS = 16;
-constexpr int32_t SCALE = 1 << FRACTIONAL_BITS;
-// constexpr int32_t SCALE = 100;
+constexpr float turnfactor = 0.2f;
 
-constexpr int32_t ConvertToInt(double number){
-    return static_cast<int32_t>(number * SCALE);
-}
+float leftmargin{100.0f};
+float bottommargin{500.0f};
+float rightmargin{700.0f};
+float topmargin{100.0f};
 
-constexpr double ConvertToDouble(int32_t number){
-    return static_cast<double>(number) / SCALE;
-}
-
-constexpr int32_t Multiply(int32_t num1, int32_t num2){
-    return (static_cast<int64_t>(num1) * num2) >> FRACTIONAL_BITS;
-}
-
-constexpr int32_t Divide(int32_t num1, int32_t num2){
-    return ( static_cast<int64_t>(num1) << FRACTIONAL_BITS ) / num2;
-}
-
-constexpr int32_t turnfactor = ConvertToInt(0.2);         // Raw int: 13107
-int leftmargin {ConvertToInt(100.0)};
-int bottommargin {ConvertToInt(500.0)};
-int rightmargin {ConvertToInt(700.0)};
-int topmargin {ConvertToInt(100.0)};
-
-// int32_t angle = ConvertToInt(45.0); 
-// // top right.
-
-// int32_t speed = ConvertToInt(1.0);
-// // 5 pixels per second.
-
-
-class static_prey{
+// static prey
+class static_prey
+{
 private:
-
 public:
-    int32_t x;
-    int32_t y;
+    float x;
+    float y;
 
-    static_prey(int32_t start_x, int32_t start_y):
-    x(start_x),
-    y(start_y)
-    {}
+    static_prey(float start_x, float start_y) : x(start_x),
+                                                y(start_y)
+    {
+    }
 };
 
 // predator class
-class predator{
+class predator
+{
 private:
-    void ScreenEdge(){
-        if ( x < leftmargin )
-    { 
+    void ScreenEdge()
+    {
+        if (x < leftmargin)
+        {
             vx = vx + turnfactor;
-    }
-        if ( x > rightmargin )
-    { 
+        }
+
+        if (x > rightmargin)
+        {
             vx = vx - turnfactor;
-    }
-        if ( y > bottommargin )
-    { 
+        }
+
+        if (y > bottommargin)
+        {
             vy = vy - turnfactor;
-    }
-        if ( y < topmargin )
-    { 
+        }
+
+        if (y < topmargin)
+        {
             vy = vy + turnfactor;
-    }
+        }
     }
 
-    void SetRotation(){
-        this->left_rot_x = 
-            this->left_x * cos(this->angle) - 
-            this->left_y * sin(this->angle);
+    void SetRotation()
+    {
+        this->left_rot_x =
+            this->left_x * std::cos(this->angle) -
+            this->left_y * std::sin(this->angle);
 
         this->left_rot_y =
-            this->left_x * sin(this->angle) +
-            this->left_y * cos(this->angle);
+            this->left_x * std::sin(this->angle) +
+            this->left_y * std::cos(this->angle);
 
         // Right wing
         this->right_rot_x =
-            this->right_x * cos(this->angle) -
-            this->right_y * sin(this->angle);
+            this->right_x * std::cos(this->angle) -
+            this->right_y * std::sin(this->angle);
 
         this->right_rot_y =
-            this->right_x * sin(this->angle) +
-            this->right_y * cos(this->angle);
+            this->right_x * std::sin(this->angle) +
+            this->right_y * std::cos(this->angle);
     }
 
-    double GenerateRandomAngle(){
+    float GenerateRandomAngle()
+    {
         std::random_device rd;
         std::mt19937 gen(rd());
 
-        std::uniform_real_distribution<> dist(0.0, 360.0);
+        std::uniform_real_distribution<float> dist(0.0f, 360.0f);
 
-        double angle = dist(gen);
-        double radians = angle * M_PI / 180.0;
+        float angle = dist(gen);
+        float radians = angle * M_PI / 180.0f;
 
         return radians;
     }
 
-    double AngleRadians(double angle_degrees){
-        double radians = angle_degrees * M_PI / 180.0;
+    float AngleRadians(float angle_degrees)
+    {
+        float radians = angle_degrees * M_PI / 180.0f;
         return radians;
     }
 
-    void PrivateUpdateVelocity(){
-        vx = Multiply( ConvertToInt(cos(angle)) , speed);
-        vy = Multiply(ConvertToInt(sin(angle)) , speed);
+    void PrivateUpdateVelocity()
+    {
+        vx = std::cos(angle) * speed;
+        vy = std::sin(angle) * speed;
+
         std::cout << "velocity update " << vx << " " << vy << "\n";
     }
 
-
 public:
-    double width;
-    double height;
+    float width;
+    float height;
 
-    const double left_x;
-    const double left_y;
-    const double right_x;
-    const double right_y;
+    const float left_x;
+    const float left_y;
+    const float right_x;
+    const float right_y;
 
-    double left_pos_x;
-    double left_pos_y;
-    double right_pos_x;
-    double right_pos_y;
+    const float wing_size;
 
-    double left_rot_x;
-    double left_rot_y;
-    double right_rot_x;
-    double right_rot_y;
+    float left_pos_x;
+    float left_pos_y;
+    float right_pos_x;
+    float right_pos_y;
 
-    double angle;
-    double constant_angle;
+    float left_rot_x;
+    float left_rot_y;
+    float right_rot_x;
+    float right_rot_y;
 
-    int32_t speed;
-    int32_t x;
-    int32_t y;
-    int32_t vx;
-    int32_t vy;
+    float angle;
+    float constant_angle;
+
+    float speed;
+    float x;
+    float y;
+    float vx;
+    float vy;
 
     bool use_rand_angle;
 
-    predator(int32_t start_x, int32_t start_y, double start_angle, int32_t start_speed):
-    x(start_x),
-    y(start_y),
-    angle(start_angle),
-    speed(start_speed),
-    left_x(-25.0),
-    left_y(25.0),
-    right_x(25.0),
-    right_y(25.0),
-    width(25.0),
-    height(25.0),
-    // testing constant movement
-    constant_angle(-45.0),
-    use_rand_angle(false)
-
+    predator(float start_x, float start_y, float start_angle, float start_speed) : x(start_x),
+                                                                                   y(start_y),
+                                                                                   angle(start_angle),
+                                                                                   speed(start_speed),
+                                                                                   left_x(-25.0f),
+                                                                                   left_y(25.0f),
+                                                                                   right_x(25.0f),
+                                                                                   right_y(25.0f),
+                                                                                   width(25.0f),
+                                                                                   height(25.0f),
+                                                                                   constant_angle(angle),
+                                                                                   use_rand_angle(false),
+                                                                                   wing_size(30.0f)
     {
         SetRotation();
         PrivateUpdateVelocity();
+
         constant_angle = AngleRadians(constant_angle);
-        left_pos_x = ConvertToDouble(x) + left_x;
-        left_pos_y = ConvertToDouble(y) + left_y;
-        right_pos_x = ConvertToDouble(x) + right_x;
-        right_pos_y = ConvertToDouble(y) + right_y;
+
+        left_pos_x = x + left_x;
+        left_pos_y = y + left_y;
+
+        right_pos_x = x + right_x;
+        right_pos_y = y + right_y;
+
         std::cout << "initialisation \n";
         std::cout << "\n";
-        std::cout << left_pos_x << " " << left_pos_y  << " " << right_pos_x << " " << right_pos_y; 
+
+        std::cout
+            << left_pos_x << " "
+            << left_pos_y << " "
+            << right_pos_x << " "
+            << right_pos_y;
     }
 
-    void SetX(int32_t new_x){
-        x = new_x; 
+    void SetX(float new_x)
+    {
+        x = new_x;
     }
 
-    void SetY(int32_t new_y){
-        y = new_y; 
+    void SetY(float new_y)
+    {
+        y = new_y;
     }
 
-    void SetVX(int32_t new_vx){
-        vx = new_vx; 
+    void SetVX(float new_vx)
+    {
+        vx = new_vx;
     }
 
-    void SetVY(int32_t new_vy){
-        vy = new_vy; 
+    void SetVY(float new_vy)
+    {
+        vy = new_vy;
     }
 
-    void SetAngle(double new_angle){
-        angle = new_angle; 
+    void SetAngle(float new_angle)
+    {
+        angle = new_angle;
     }
-    
-    void UpdateRandomAngle(){
-        if (use_rand_angle){
+
+    void UpdateRandomAngle()
+    {
+        if (use_rand_angle)
+        {
             angle = GenerateRandomAngle();
             std::cout << "random angle update " << angle;
-        }else{
+        }
+        else
+        {
             angle = constant_angle;
             std::cout << "using constant angle " << angle;
-
         }
-
     }
 
-    void UpdatePosition(){
-        x = x +vx;
-        y = y +vy;
+    void UpdatePosition()
+    {
+        x = x + vx;
+        y = y + vy;
 
-        std::cout << "postion   update " << x << " " << y << "\n";
-
+        std::cout << "postion update " << x << " " << y << "\n";
     }
 
-    void UpdateVelocity(){
+    void UpdateVelocity()
+    {
         PrivateUpdateVelocity();
     }
 
     // in frame function:
     // update angle before this.
-    // update postion should be done before this.
-    void UpdateWingsRotation(){
+    // update position should be done before this.
+    void UpdateWingsRotation()
+    {
         SetRotation();
     }
 
-    // void UpdateWingsPosition()
-    // {
-    //     double predator_x = ConvertToDouble(x);
-    //     double predator_y = ConvertToDouble(y);
+    sf::VertexArray PredatorShape()
+    {
 
-    //     right_pos_x = predator_x + right_rot_x;
-    //     right_pos_y = predator_y + right_rot_y;
+        float predator_x = x;
+        float predator_y = y;
 
-    //     left_pos_x = predator_x + left_rot_x;
-    //     left_pos_y = predator_y + left_rot_y;
-
-    // }
-
-    sf::VertexArray PredatorShape(){
-
-        double predator_x = ConvertToDouble(x);
-        double predator_y = ConvertToDouble(y); 
-        
         sf::VertexArray shape(sf::PrimitiveType::LineStrip, 3);
 
         std::cout << "printing wings postions \n";
-        std::cout << left_pos_x << " " << left_pos_y  << " " << right_pos_x << " " << right_pos_y; 
 
-        shape[0].position = {static_cast<float>(left_pos_x),static_cast<float>(left_pos_y)};                                             // left bottom
-        shape[1].position = {static_cast<float>(predator_x), static_cast<float>(predator_y)};                            // top point - should be head
-        shape[2].position = {static_cast<float>(right_pos_x), static_cast<float>(right_pos_y)};
+        std::cout
+            << left_pos_x << " "
+            << left_pos_y << " "
+            << right_pos_x << " "
+            << right_pos_y;
+
+        shape[0].position = {left_pos_x, left_pos_y};
+        shape[1].position = {predator_x, predator_y};
+        shape[2].position = {right_pos_x, right_pos_y};
 
         return shape;
     }
 
-    void frame(){
+    void frame()
+    {
         UpdateRandomAngle();
         UpdateWingsRotation();
         UpdateVelocity();
@@ -266,60 +261,107 @@ public:
         ScreenEdge();
     }
 
-    std::vector<double> ConvertPredatorToDouble(){
-        double dub_x = ConvertToDouble(x);
-        double dub_y = ConvertToDouble(y);
+    std::vector<float> ConvertPredatorToDouble()
+    {
 
-        return std::vector<double> {dub_x, dub_y};
+        float dub_x = x;
+        float dub_y = y;
+
+        return std::vector<float>{dub_x, dub_y};
     }
 
-    // new update of wings postion
-    void UpdateWingsPosition(){
-        int32_t backward_vx = -vx;
-        int32_t backward_vy = -vy;
+    void UpdateWingsPosition()
+    {
 
-        int32_t perpendicular_vx = vx;
-        int32_t perpendicular_vy = -vy;
+        float backward_vx = -vx;
+        float backward_vy = -vy;
 
-        int32_t right_wing_vx = backward_vx + Divide(perpendicular_vx, ConvertToInt(2.0));
-        int32_t right_wing_vy = backward_vy + Divide(perpendicular_vy, ConvertToInt(2.0));
+        float perpendicular_vx = vx;
+        float perpendicular_vy = -vy;
 
-        int32_t left_wing_vx = backward_vx - Divide(perpendicular_vx, ConvertToInt(2.0));
-        int32_t left_wing_vy = backward_vy - Divide(perpendicular_vx, ConvertToInt(2.0));
+        float right_wing_vx = backward_vx + perpendicular_vx;
+        float right_wing_vy = backward_vy + perpendicular_vy;
 
-        right_wing_vx /= ConvertToInt(2.0);
-        right_wing_vy /= ConvertToInt(2.0);
-        left_wing_vx /= ConvertToInt(2.0);
-        left_wing_vy /= ConvertToInt(2.0);
+        float left_wing_vx = backward_vx - perpendicular_vx;
+        float left_wing_vy = backward_vy - perpendicular_vy;
 
-        right_pos_x = ConvertToDouble(x) + right_wing_vx;
-        right_pos_y = ConvertToDouble(y) + right_wing_vy;
-        
-        left_pos_x = ConvertToDouble(x) + left_wing_vx;
-        left_pos_y = ConvertToDouble(y) + left_wing_vy;
-    } 
+        bool right_wing_vx_bool = std::signbit(right_wing_vx);
+        bool right_wing_vy_bool = std::signbit(right_wing_vy);
 
+        bool left_wing_vx_bool = std::signbit(left_wing_vx);
+        bool left_wing_vy_bool = std::signbit(left_wing_vy);
+
+        float new_wing_size_right_vx = wing_size;
+        float new_wing_size_right_vy = wing_size;
+        float new_wing_size_left_vx = wing_size;
+        float new_wing_size_left_vy = wing_size;
+
+        if (right_wing_vx == 0)
+        {
+            new_wing_size_right_vx = 0;
+        }
+
+        if (right_wing_vy == 0)
+        {
+            new_wing_size_right_vy = 0;
+        }
+
+        if (left_wing_vx == 0)
+        {
+            new_wing_size_left_vx = 0;
+        }
+
+        if (left_wing_vy == 0)
+        {
+            new_wing_size_left_vy = 0;
+        }
+
+        if (right_wing_vx_bool == true)
+        {
+            new_wing_size_right_vx = -wing_size;
+        }
+
+        if (right_wing_vy_bool == true)
+        {
+            new_wing_size_right_vy = -wing_size;
+        }
+
+        if (left_wing_vx_bool == true)
+        {
+            new_wing_size_left_vx = -wing_size;
+        }
+
+        if (left_wing_vy_bool == true)
+        {
+            new_wing_size_left_vy = -wing_size;
+        }
+
+        right_pos_x = x + new_wing_size_right_vx;
+        right_pos_y = y + new_wing_size_right_vy;
+
+        left_pos_x = x + new_wing_size_left_vx;
+        left_pos_y = y + new_wing_size_left_vy;
+    }
 };
 
-int main(){
+int main()
+{
 
-    // predator pred = InitSinglePredator();
-    double init_angle = 45.0;
-    double radians = init_angle * M_PI / 180.0;
-    int32_t init_x = ConvertToInt(400.0);
-    int32_t init_y = ConvertToInt(300.0);
-    int32_t init_speed = ConvertToInt(50.0);
+    float init_angle = 180.0f;
+    float radians = init_angle * M_PI / 180.0f;
+
+    float init_x = 400.0f;
+    float init_y = 300.0f;
+    float init_speed = 49.0f;
+
     predator pred(init_x, init_y, radians, init_speed);
 
-
-    static_prey prey(ConvertToInt(250.0), ConvertToInt(250.0));
-
+    static_prey prey(250.0f, 250.0f);
 
     sf::RenderWindow window(
-        sf::VideoMode({800,600}),
-        "predator"
-    );
-    
+        sf::VideoMode({800, 600}),
+        "predator");
+
     window.setFramerateLimit(4);
 
     while (window.isOpen())
@@ -329,31 +371,37 @@ int main(){
             if (event->is<sf::Event::Closed>())
                 window.close();
         }
-        
+
         window.clear();
 
-
         // predator
-        std::vector<double> pred_dubs = pred.ConvertPredatorToDouble();
+        std::vector<float> pred_dubs = pred.ConvertPredatorToDouble();
 
-        std::cout << "pred in window " << pred.x << " " << pred.y << "\n";
-        // CircleShape, setPosition, draw
-        
+        std::cout << "pred in window "
+                  << pred.x << " "
+                  << pred.y << "\n";
+
         sf::VertexArray shape = pred.PredatorShape();
 
-        //prey
+        // prey
         sf::CircleShape circle_static_prey(20.f);
 
-        sf::Vector2<float> prey_pos = {static_cast<float>(ConvertToDouble(prey.x)),  static_cast<float>(ConvertToDouble(prey.y))};
-        circle_static_prey.setPosition({prey_pos.x, prey_pos.y});   
+        sf::Vector2<float> prey_pos = {
+            prey.x,
+            prey.y};
+
+        circle_static_prey.setPosition({prey_pos.x,
+                                        prey_pos.y});
 
         // drawing
         window.draw(shape);
         window.draw(circle_static_prey);
 
         pred.frame();
-        std::cout << pred_dubs[0] << " " << pred_dubs[1] << "\n";
 
+        std::cout
+            << pred_dubs[0] << " "
+            << pred_dubs[1] << "\n";
 
         window.display();
     }
