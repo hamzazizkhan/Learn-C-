@@ -126,6 +126,8 @@ public:
     float constant_angle;
 
     float speed;
+    float turn_factor;
+
     float x;
     float y;
     float vx;
@@ -145,7 +147,8 @@ public:
                                                                                    width(25.0f),
                                                                                    height(25.0f),
                                                                                    use_rand_angle(false),
-                                                                                   wing_size(30.0f)
+                                                                                   wing_size(30.0f),
+                                                                                   turn_factor(0.02f)
     {
         SetRotation();
         PrivateUpdateVelocity();
@@ -198,6 +201,8 @@ public:
         {
             angle = GenerateRandomAngle();
             // std::cout << "random angle update " << angle;
+        }else{
+            angle = angle +0.02;
         }
     }
 
@@ -288,6 +293,9 @@ public:
         left_pos_x =  x + (left_wing_vx  * wing_size);
         left_pos_y =  y + (left_wing_vy  * wing_size);
     }
+
+
+    // ======================================================== PREDATOR PHYSICS ======================================================== 
 };
 
 int main()
