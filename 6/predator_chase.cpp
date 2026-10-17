@@ -21,6 +21,8 @@ public:
     float x;
     float y;
 
+    float radius;
+
     static_prey(float start_x, float start_y) : x(start_x),
                                                 y(start_y)
     {
@@ -54,26 +56,6 @@ private:
         }
     }
 
-    void SetRotation()
-    {
-        this->left_rot_x =
-            this->left_x * std::cos(this->angle) -
-            this->left_y * std::sin(this->angle);
-
-        this->left_rot_y =
-            this->left_x * std::sin(this->angle) +
-            this->left_y * std::cos(this->angle);
-
-        // Right wing
-        this->right_rot_x =
-            this->right_x * std::cos(this->angle) -
-            this->right_y * std::sin(this->angle);
-
-        this->right_rot_y =
-            this->right_x * std::sin(this->angle) +
-            this->right_y * std::cos(this->angle);
-    }
-
     float GenerateRandomAngle()
     {
         std::random_device rd;
@@ -87,6 +69,17 @@ private:
         return radians;
     }
 
+    float GenerateRandomTurnFactor(){
+        std::random_device rd;
+        std::mt19937 gen(rd());
+
+        std::uniform_real_distribution<float> dist(-0.1f, 0.1f);
+
+        float new_turn_factor = dist(gen);
+
+        return new_turn_factor;
+    }
+
     float AngleRadians(float angle_degrees)
     {
         float radians = angle_degrees * M_PI / 180.0f;
@@ -97,8 +90,17 @@ private:
     {
         vx = std::cos(angle) * speed;
         vy = std::sin(angle) * speed;
+    }
+    
+    void UpdateConePosition(){
+        cone_head_x = x + ( vx  * cone_length );
+        cone_head_y = y + ( vy  * cone_length );
 
-        // std::cout << "velocity update " << vx << " " << vy << "\n";
+        left_cone_x = x - (vx * cone_length);
+        left_cone_y = cone_head_y;
+
+        right_cone_x = x + (vx * cone_length);
+        right_cone_y = cone_head_y;
     }
 
 public:
@@ -111,16 +113,19 @@ public:
     const float right_y;
 
     const float wing_size;
+    const float cone_length;
+
+    float cone_head_x;
+    float cone_head_y;
+    float left_cone_x;
+    float left_cone_y;
+    float right_cone_x;
+    float right_cone_y;
 
     float left_pos_x;
     float left_pos_y;
     float right_pos_x;
     float right_pos_y;
-
-    float left_rot_x;
-    float left_rot_y;
-    float right_rot_x;
-    float right_rot_y;
 
     float angle;
     float constant_angle;
@@ -133,7 +138,6 @@ public:
     float vx;
     float vy;
 
-    bool use_rand_angle;
 
     predator(float start_x, float start_y, float start_angle, float start_speed) : x(start_x),
                                                                                    y(start_y),
@@ -146,13 +150,11 @@ public:
                                                                                    right_y(25.0f),
                                                                                    width(25.0f),
                                                                                    height(25.0f),
-                                                                                   use_rand_angle(false),
-                                                                                   wing_size(30.0f),
-                                                                                   turn_factor(0.02f)
+                                                                                   wing_size(10.0f),
+                                                                                   turn_factor(0.02f),
+                                                                                   cone_length(50.0f)
     {
-        SetRotation();
         PrivateUpdateVelocity();
-
 
         left_pos_x = x + left_x;
         left_pos_y = y + left_y;
@@ -160,14 +162,7 @@ public:
         right_pos_x = x + right_x;
         right_pos_y = y + right_y;
 
-        // std::cout << "initialisation \n";
-        // std::cout << "\n";
-
-        // std::cout
-        //     << left_pos_x << " "
-        //     << left_pos_y << " "
-        //     << right_pos_x << " "
-        //     << right_pos_y;
+        UpdateConePosition();
     }
 
     void SetX(float new_x)
@@ -195,23 +190,20 @@ public:
         angle = new_angle;
     }
 
+    void UpdateTurnFactor(){
+        turn_factor = GenerateRandomTurnFactor(); 
+    }
+
     void UpdateRandomAngle()
     {
-        if (use_rand_angle)
-        {
-            angle = GenerateRandomAngle();
-            // std::cout << "random angle update " << angle;
-        }else{
-            angle = angle +0.02;
-        }
+        UpdateTurnFactor();
+        angle = angle + turn_factor;
     }
 
     void UpdatePosition()
     {
         x = x + vx;
         y = y + vy;
-
-        // std::cout << "postion update " << x << " " << y << "\n";
     }
 
     void UpdateVelocity()
@@ -219,33 +211,37 @@ public:
         PrivateUpdateVelocity();
     }
 
-    // in frame function:
-    // update angle before this.
-    // update position should be done before this.
-    void UpdateWingsRotation()
-    {
-        SetRotation();
-    }
-
     sf::VertexArray PredatorShape()
     {
-
-        float predator_x = x;
-        float predator_y = y;
-
         sf::VertexArray shape(sf::PrimitiveType::LineStrip, 3);
 
-        // std::cout << "printing wings postions \n";
-
-        // std::cout
-        //     << left_pos_x << " "
-        //     << left_pos_y << " "
-        //     << right_pos_x << " "
-        //     << right_pos_y;
-
         shape[0].position = {left_pos_x, left_pos_y};
-        shape[1].position = {predator_x, predator_y};
+        shape[1].position = {x, y};
         shape[2].position = {right_pos_x, right_pos_y};
+
+        return shape;
+    }
+
+    sf::VertexArray LeftPredatorConeShape(){
+        sf::VertexArray shape (sf::PrimitiveType::LineStrip, 2);
+
+        shape[0].position = {x, y};
+        shape[1].position = {left_cone_x, left_cone_y};
+
+        shape[0].color = sf::Color::Red;
+        shape[1].color = sf::Color::Red;
+
+        return shape;
+    }
+
+    sf::VertexArray RightPredatorConeShape(){
+        sf::VertexArray shape (sf::PrimitiveType::LineStrip, 2);
+
+        shape[0].position = {x, y};
+        shape[1].position = {right_cone_x, right_cone_y};
+
+        shape[0].color = sf::Color::Red;
+        shape[1].color = sf::Color::Red;
 
         return shape;
     }
@@ -253,10 +249,10 @@ public:
     void frame()
     {
         UpdateRandomAngle();
-        UpdateWingsRotation();
         UpdateVelocity();
         UpdatePosition();
         UpdateWingsPosition();
+        UpdateConePosition();
         ScreenEdge();
     }
 
@@ -269,6 +265,7 @@ public:
         return std::vector<float>{dub_x, dub_y};
     }
 
+    // move function to private.
     void UpdateWingsPosition()
     {
 
@@ -306,7 +303,7 @@ int main()
 
     float init_x = 400.0f;
     float init_y = 300.0f;
-    float init_speed = 1.0f;
+    float init_speed = 0.5f;
 
     predator pred(init_x, init_y, radians, init_speed);
 
@@ -316,7 +313,7 @@ int main()
         sf::VideoMode({800, 600}),
         "predator");
 
-    window.setFramerateLimit(100);
+    window.setFramerateLimit(70);
 
     while (window.isOpen())
     {
@@ -328,17 +325,12 @@ int main()
 
         window.clear();
 
-        // predator
-        std::vector<float> pred_dubs = pred.ConvertPredatorToDouble();
-
-        // std::cout << "pred in window "
-        //           << pred.x << " "
-        //           << pred.y << "\n";
-
         sf::VertexArray shape = pred.PredatorShape();
+        sf::VertexArray left_cone_shape = pred.LeftPredatorConeShape();
+        sf::VertexArray right_cone_shape = pred.RightPredatorConeShape();
 
         // prey
-        sf::CircleShape circle_static_prey(20.f);
+        sf::CircleShape circle_static_prey(10.0f);
 
         sf::Vector2<float> prey_pos = {
             prey.x,
@@ -350,12 +342,10 @@ int main()
         // drawing
         window.draw(shape);
         window.draw(circle_static_prey);
+        window.draw(left_cone_shape);
+        window.draw(right_cone_shape);
 
         pred.frame();
-
-        // std::cout
-        //     << pred_dubs[0] << " "
-        //     << pred_dubs[1] << "\n";
 
         window.display();
     }
