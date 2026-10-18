@@ -93,15 +93,75 @@ private:
     }
     
     void UpdateConePosition(){
-        cone_head_x = x + ( vx  * cone_length );
-        cone_head_y = y + ( vy  * cone_length );
+        float normalised_vx = vx/speed; 
+        float normalised_vy = vy/speed; 
 
-        left_cone_x = x - (vx * cone_length);
-        left_cone_y = cone_head_y;
+        float forward_vx = normalised_vx;
+        float forward_vy = normalised_vy;
 
-        right_cone_x = x + (vx * cone_length);
-        right_cone_y = cone_head_y;
+        float perpendicular_vx = normalised_vy;
+        float perpendicular_vy = -normalised_vx;
+
+        float right_wing_vx = forward_vx + perpendicular_vx;
+        float right_wing_vy = forward_vy + perpendicular_vy;
+
+        float left_wing_vx = forward_vx - perpendicular_vx;
+        float left_wing_vy = forward_vy - perpendicular_vy;
+
+        right_cone_x = x + (right_wing_vx * cone_length);
+        right_cone_y = y + (right_wing_vy * cone_length);
+
+        left_cone_x =  x + (left_wing_vx  * cone_length);
+        left_cone_y =  y + (left_wing_vy  * cone_length);
     }
+
+    void UpdateWingsPosition()
+    {
+
+        float normalised_vx = vx/speed; 
+        float normalised_vy = vy/speed; 
+
+        float backward_vx = -normalised_vx;
+        float backward_vy = -normalised_vy;
+
+        float perpendicular_vx = normalised_vy;
+        float perpendicular_vy = -normalised_vx;
+
+        float right_wing_vx = backward_vx + perpendicular_vx;
+        float right_wing_vy = backward_vy + perpendicular_vy;
+
+        float left_wing_vx = backward_vx - perpendicular_vx;
+        float left_wing_vy = backward_vy - perpendicular_vy;
+
+        right_pos_x = x + (right_wing_vx * wing_size);
+        right_pos_y = y + (right_wing_vy * wing_size);
+
+        left_pos_x =  x + (left_wing_vx  * wing_size);
+        left_pos_y =  y + (left_wing_vy  * wing_size);
+    }
+
+
+    void UpdateTurnFactor(){
+        turn_factor = GenerateRandomTurnFactor(); 
+    }
+
+    void UpdateRandomAngle()
+    {
+        UpdateTurnFactor();
+        angle = angle + turn_factor;
+    }
+
+    void UpdatePosition()
+    {
+        x = x + vx;
+        y = y + vy;
+    }
+
+    void UpdateVelocity()
+    {
+        PrivateUpdateVelocity();
+    }
+
 
 public:
     float width;
@@ -165,52 +225,6 @@ public:
         UpdateConePosition();
     }
 
-    void SetX(float new_x)
-    {
-        x = new_x;
-    }
-
-    void SetY(float new_y)
-    {
-        y = new_y;
-    }
-
-    void SetVX(float new_vx)
-    {
-        vx = new_vx;
-    }
-
-    void SetVY(float new_vy)
-    {
-        vy = new_vy;
-    }
-
-    void SetAngle(float new_angle)
-    {
-        angle = new_angle;
-    }
-
-    void UpdateTurnFactor(){
-        turn_factor = GenerateRandomTurnFactor(); 
-    }
-
-    void UpdateRandomAngle()
-    {
-        UpdateTurnFactor();
-        angle = angle + turn_factor;
-    }
-
-    void UpdatePosition()
-    {
-        x = x + vx;
-        y = y + vy;
-    }
-
-    void UpdateVelocity()
-    {
-        PrivateUpdateVelocity();
-    }
-
     sf::VertexArray PredatorShape()
     {
         sf::VertexArray shape(sf::PrimitiveType::LineStrip, 3);
@@ -255,44 +269,6 @@ public:
         UpdateConePosition();
         ScreenEdge();
     }
-
-    std::vector<float> ConvertPredatorToDouble()
-    {
-
-        float dub_x = x;
-        float dub_y = y;
-
-        return std::vector<float>{dub_x, dub_y};
-    }
-
-    // move function to private.
-    void UpdateWingsPosition()
-    {
-
-        float normalised_vx = vx/speed; 
-        float normalised_vy = vy/speed; 
-
-        float backward_vx = -normalised_vx;
-        float backward_vy = -normalised_vy;
-
-        float perpendicular_vx = normalised_vy;
-        float perpendicular_vy = -normalised_vx;
-
-        float right_wing_vx = backward_vx + perpendicular_vx;
-        float right_wing_vy = backward_vy + perpendicular_vy;
-
-        float left_wing_vx = backward_vx - perpendicular_vx;
-        float left_wing_vy = backward_vy - perpendicular_vy;
-
-        right_pos_x = x + (right_wing_vx * wing_size);
-        right_pos_y = y + (right_wing_vy * wing_size);
-
-        left_pos_x =  x + (left_wing_vx  * wing_size);
-        left_pos_y =  y + (left_wing_vy  * wing_size);
-    }
-
-
-    // ======================================================== PREDATOR PHYSICS ======================================================== 
 };
 
 int main()
@@ -331,17 +307,24 @@ int main()
 
         // prey
         sf::CircleShape circle_static_prey(10.0f);
+        // cone head
+        sf::CircleShape circle_cone_head(2.0f);
 
         sf::Vector2<float> prey_pos = {
             prey.x,
             prey.y};
 
+        sf::Vector2<float> cone_pos = {pred.cone_head_x, pred.cone_head_y};
+
         circle_static_prey.setPosition({prey_pos.x,
                                         prey_pos.y});
 
+        circle_cone_head.setPosition({cone_pos.x,
+                                        cone_pos.y});
         // drawing
         window.draw(shape);
         window.draw(circle_static_prey);
+        window.draw(circle_cone_head);
         window.draw(left_cone_shape);
         window.draw(right_cone_shape);
 
