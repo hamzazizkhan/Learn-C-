@@ -24,7 +24,8 @@ public:
     float radius;
 
     static_prey(float start_x, float start_y) : x(start_x),
-                                                y(start_y)
+                                                y(start_y),
+                                                radius(20.0f)
     {
     }
 };
@@ -99,8 +100,8 @@ private:
         float forward_vx = normalised_vx;
         float forward_vy = normalised_vy;
 
-        float perpendicular_vx = normalised_vy;
-        float perpendicular_vy = -normalised_vx;
+        float perpendicular_vx = normalised_vy * cone_width;
+        float perpendicular_vy = -normalised_vx * cone_width;
 
         float right_wing_vx = forward_vx + perpendicular_vx;
         float right_wing_vy = forward_vy + perpendicular_vy;
@@ -174,6 +175,7 @@ public:
 
     const float wing_size;
     const float cone_length;
+    const float cone_width;
 
     float cone_head_x;
     float cone_head_y;
@@ -212,7 +214,8 @@ public:
                                                                                    height(25.0f),
                                                                                    wing_size(10.0f),
                                                                                    turn_factor(0.02f),
-                                                                                   cone_length(50.0f)
+                                                                                   cone_length(50.0f),
+                                                                                   cone_width(0.5f)
     {
         PrivateUpdateVelocity();
 
@@ -301,14 +304,12 @@ int main()
 
         window.clear();
 
-        sf::VertexArray shape = pred.PredatorShape();
+        sf::VertexArray predator_shape = pred.PredatorShape();
         sf::VertexArray left_cone_shape = pred.LeftPredatorConeShape();
         sf::VertexArray right_cone_shape = pred.RightPredatorConeShape();
 
         // prey
-        sf::CircleShape circle_static_prey(10.0f);
-        // cone head
-        sf::CircleShape circle_cone_head(2.0f);
+        sf::CircleShape circle_static_prey(prey.radius);
 
         sf::Vector2<float> prey_pos = {
             prey.x,
@@ -319,12 +320,9 @@ int main()
         circle_static_prey.setPosition({prey_pos.x,
                                         prey_pos.y});
 
-        circle_cone_head.setPosition({cone_pos.x,
-                                        cone_pos.y});
         // drawing
-        window.draw(shape);
+        window.draw(predator_shape);
         window.draw(circle_static_prey);
-        window.draw(circle_cone_head);
         window.draw(left_cone_shape);
         window.draw(right_cone_shape);
 
