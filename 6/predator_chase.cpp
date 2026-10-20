@@ -177,8 +177,8 @@ private:
         if (PreyDetection(prey)){
             std::vector<float> attraction_vector = attraction(prey);
 
-            vx = attraction_vector[0] * attraction_scale;
-            vy = attraction_vector[1] * attraction_scale;
+            vx = vx + (attraction_vector[0] * speed);
+            vy = vy + (attraction_vector[1] * speed);
 
             return;
         }
@@ -191,10 +191,13 @@ private:
         float direction_vec_x = prey.x - x;
         float direction_vec_y = prey.y - y;
 
+        float normalised_direction_vec_x = direction_vec_x * attraction_scale;
+        float normalised_direction_vec_y = direction_vec_y * attraction_scale;
+
         float length = std::sqrt((direction_vec_x * direction_vec_x) + (direction_vec_y + direction_vec_y));
 
-        float normalised_direction_vec_x = direction_vec_x/length;
-        float normalised_direction_vec_y = direction_vec_y/length;
+        normalised_direction_vec_x = direction_vec_x/length;
+        normalised_direction_vec_y = direction_vec_y/length;
 
         return std::vector<float> {normalised_direction_vec_x, normalised_direction_vec_y};
     }
