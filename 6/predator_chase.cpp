@@ -6,12 +6,18 @@
 #include <random>
 #include <optional>
 
-constexpr float turnfactor = 0.2f;
+constexpr float edge_turn_factor {1.0f};
 
 float leftmargin{100.0f};
 float bottommargin{500.0f};
 float rightmargin{700.0f};
 float topmargin{100.0f};
+
+
+// helper functions
+float Length(float x, float y){
+    return (std::sqrt( (x*x) + (y*y) ));
+}
 
 // static prey
 class static_prey
@@ -36,25 +42,33 @@ class predator
 private:
     void ScreenEdge()
     {
+        float length;
+
         if (x < leftmargin)
         {
-            vx = vx + turnfactor;
+            angle = angle + edge_turn_factor;
+            InitialVelocityUpdate();
         }
 
         if (x > rightmargin)
         {
-            vx = vx - turnfactor;
+            angle = angle + edge_turn_factor;
+            InitialVelocityUpdate();
         }
 
         if (y > bottommargin)
         {
-            vy = vy - turnfactor;
+            angle = angle + edge_turn_factor;
+            InitialVelocityUpdate();
         }
 
         if (y < topmargin)
         {
-            vy = vy + turnfactor;
+            angle = angle + edge_turn_factor;
+            InitialVelocityUpdate();
         }
+        
+
     }
 
     float GenerateRandomAngle()
@@ -87,7 +101,7 @@ private:
         return radians;
     }
 
-    void PrivateUpdateVelocity()
+    void InitialVelocityUpdate()
     {
         vx = std::cos(angle) * speed;
         vy = std::sin(angle) * speed;
@@ -158,9 +172,31 @@ private:
         y = y + vy;
     }
 
-    void UpdateVelocity()
+    void UpdateVelocity(static_prey prey)
     {
-        PrivateUpdateVelocity();
+        if (PreyDetection(prey)){
+            std::vector<float> attraction_vector = attraction(prey);
+
+            vx = attraction_vector[0] * attraction_scale;
+            vy = attraction_vector[1] * attraction_scale;
+
+            return;
+        }
+
+        vx = std::cos(angle) * speed;
+        vy = std::sin(angle) * speed;
+    }
+
+    std::vector<float> attraction(static_prey prey){
+        float direction_vec_x = prey.x - x;
+        float direction_vec_y = prey.y - y;
+
+        float length = std::sqrt((direction_vec_x * direction_vec_x) + (direction_vec_y + direction_vec_y));
+
+        float normalised_direction_vec_x = direction_vec_x/length;
+        float normalised_direction_vec_y = direction_vec_y/length;
+
+        return std::vector<float> {normalised_direction_vec_x, normalised_direction_vec_y};
     }
 
 
@@ -194,6 +230,7 @@ public:
 
     float speed;
     float turn_factor;
+    float attraction_scale;
 
     float x;
     float y;
@@ -213,11 +250,12 @@ public:
                                                                                    width(25.0f),
                                                                                    height(25.0f),
                                                                                    wing_size(10.0f),
-                                                                                   turn_factor(0.02f),
-                                                                                   cone_length(50.0f),
-                                                                                   cone_width(0.5f)
+                                                                                   turn_factor(0.2f),
+                                                                                   cone_length(100.0f),
+                                                                                   cone_width(0.5f),
+                                                                                   attraction_scale(0.02f)
     {
-        PrivateUpdateVelocity();
+        InitialVelocityUpdate();
 
         left_pos_x = x + left_x;
         left_pos_y = y + left_y;
@@ -236,6 +274,9 @@ public:
         shape[1].position = {x, y};
         shape[2].position = {right_pos_x, right_pos_y};
 
+        shape[0].color = sf::Color::Green;
+        shape[1].color = sf::Color::Green;
+        shape[2].color = sf::Color::Green;
         return shape;
     }
 
@@ -263,16 +304,60 @@ public:
         return shape;
     }
 
-    void frame()
+    void frame(static_prey prey)
     {
         UpdateRandomAngle();
-        UpdateVelocity();
+        UpdateVelocity(prey);
+        ScreenEdge();
         UpdatePosition();
         UpdateWingsPosition();
         UpdateConePosition();
-        ScreenEdge();
     }
+
+    bool PreyDetection(static_prey prey){
+        // x,y to left cone
+        float head_to_left_x = left_cone_x - x;
+        float head_to_left_y = left_cone_y - y;
+
+        // left cone to right cone
+        float left_to_right_x = right_cone_x - left_cone_x;
+        float left_to_right_y = right_cone_y - left_cone_y;
+
+        // right cone to x,y
+        float right_to_head_x = x - right_cone_x;
+        float right_to_head_y = y - right_cone_y;
+
+        // x,y (A) to prey(P)
+        float AP_x = prey.x -x; 
+        float AP_y = prey.y -y; 
+
+        // left cone to prey
+        float BP_x = prey.x - left_cone_x;
+        float BP_y = prey.y - left_cone_y;
+
+        // right cone to prey
+        float CP_x = prey.x - right_cone_x;
+        float CP_y = prey.y - right_cone_y;
+
+        //multiply all three to determine sign
+        float sign_A = (head_to_left_x * AP_y) - (head_to_left_y * AP_x);
+
+        float sign_B = (left_to_right_x * BP_y) - (left_to_right_y * BP_x);
+
+        float sign_C = (right_to_head_x * CP_y) - (right_to_head_y * CP_x);
+
+        bool has_negative = (sign_A < 0) || (sign_B < 0) || (sign_C < 0);
+        bool has_positive = (sign_A > 0) || (sign_B > 0) || (sign_C > 0);
+
+        return !(has_negative && has_positive);
+    }
+
 };
+
+ 
+
+
+
 
 int main()
 {
@@ -282,7 +367,7 @@ int main()
 
     float init_x = 400.0f;
     float init_y = 300.0f;
-    float init_speed = 0.5f;
+    float init_speed = 1.0f;
 
     predator pred(init_x, init_y, radians, init_speed);
 
@@ -292,7 +377,7 @@ int main()
         sf::VideoMode({800, 600}),
         "predator");
 
-    window.setFramerateLimit(70);
+    window.setFramerateLimit(100);
 
     while (window.isOpen())
     {
@@ -326,7 +411,7 @@ int main()
         window.draw(left_cone_shape);
         window.draw(right_cone_shape);
 
-        pred.frame();
+        pred.frame(prey);
 
         window.display();
     }

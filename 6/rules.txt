@@ -1,4 +1,33 @@
 ===========================================================================================================
+NEXT STEPS
+===========================================================================================================
+predator
+1. attraction when prey in visual cone.
+2. speed up when prey in visual cone.
+3. kill prey when predator enters prey death radius.
+
+prey
+1. repulsion when predator in visual radius
+
+player:
+1. can only see whats within the visual cone.
+2. when a prey is in its visual cone you can move faster.
+
+objective:
+1. kill all prey
+
+tools:
+1. can enable an ability to see all prey for 1 second.
+
+keep at this for now. build the full simple game and deploy. make available online as beta version.
+
+to implement after beta version is deployed
+1. difficulty levels.
+    1. dodging mechanics for prey (make harder to kill)
+2. collect loot from around the map to buy abilities 
+    1. see all prey ability
+3. possibly create maps.
+===========================================================================================================
 PREDATOR
 ===========================================================================================================
 visible ranges are cones on a 2D plane. 
