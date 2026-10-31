@@ -28,12 +28,46 @@ public:
     float y;
 
     float radius;
+    float death_radius;
 
     static_prey(float start_x, float start_y) : x(start_x),
                                                 y(start_y),
-                                                radius(20.0f)
+                                                radius(20.0f),
+                                                death_radius(10.0f)
     {
     }
+
+    sf::CircleShape PreyShape(){
+
+        sf::Vector2<float> prey_pos = {
+            x,
+            y};
+
+        sf::CircleShape circle_static_prey(radius);
+
+        circle_static_prey.setOrigin({radius, radius});
+
+        circle_static_prey.setPosition(prey_pos);
+
+        return circle_static_prey;
+    }
+    sf::CircleShape DeathRadiusShape (){
+
+        sf::Vector2<float> prey_pos = {
+            x,
+            y};
+
+        sf::CircleShape prey_death_radius(death_radius);
+        prey_death_radius.setOrigin({death_radius, death_radius});
+        prey_death_radius.setPosition(prey_pos);
+
+        prey_death_radius.setFillColor(sf::Color::Transparent);
+        prey_death_radius.setOutlineColor(sf::Color::Red);
+        prey_death_radius.setOutlineThickness(2.f);
+
+        return prey_death_radius;
+    }
+
 };
 
 // predator class
@@ -194,6 +228,16 @@ private:
         angle = std::atan2(direction_vec_y, direction_vec_x);
     }
 
+    void UpdatePreyDead(static_prey& prey){
+        float squared_distance = std::pow(x - prey.x, 2) + std::pow(y - prey.y, 2);
+
+        if (squared_distance <= prey.radius){
+            prey_dead = true;
+        }else{
+            prey_dead = false;
+        }
+
+    }
 
 public:
     float width;
@@ -235,6 +279,8 @@ public:
     float vx;
     float vy;
 
+    bool prey_dead;
+
 
     predator(float start_x, float start_y, float start_angle, float start_speed) : x(start_x),
                                                                                    y(start_y),
@@ -253,7 +299,8 @@ public:
                                                                                    cone_length(200.0f),
                                                                                    cone_width(1.0f),
                                                                                    attraction_scale(0.02f),
-                                                                                   attraction_speed(speed + 0.5f)
+                                                                                   attraction_speed(speed + 0.5f),
+                                                                                   prey_dead(false)
     {
         InitialVelocityUpdate();
 
@@ -304,7 +351,7 @@ public:
         return shape;
     }
 
-    void frame(static_prey prey)
+    void frame(static_prey& prey)
     {
         UpdateRandomAngle();
         UpdateVelocity(prey);
@@ -312,6 +359,7 @@ public:
         UpdatePosition();
         UpdateWingsPosition();
         UpdateConePosition();
+        UpdatePreyDead(prey);
     }
 
     bool PreyDetection(static_prey prey){
@@ -390,27 +438,27 @@ int main()
 
         window.clear();
 
+        // pred 
         sf::VertexArray predator_shape = pred.PredatorShape();
         sf::VertexArray left_cone_shape = pred.LeftPredatorConeShape();
         sf::VertexArray right_cone_shape = pred.RightPredatorConeShape();
 
+
+
         // prey
-        sf::CircleShape circle_static_prey(prey.radius);
-
-        sf::Vector2<float> prey_pos = {
-            prey.x,
-            prey.y};
-
-        sf::Vector2<float> cone_pos = {pred.cone_head_x, pred.cone_head_y};
-
-        circle_static_prey.setPosition({prey_pos.x,
-                                        prey_pos.y});
+        sf::CircleShape circle_static_prey = prey.PreyShape();
+        sf::CircleShape prey_death_radius = prey.DeathRadiusShape();
 
         // drawing
+        if (!pred.prey_dead){
+            window.draw(circle_static_prey);
+            window.draw(prey_death_radius);
+        }
+
         window.draw(predator_shape);
-        window.draw(circle_static_prey);
         window.draw(left_cone_shape);
         window.draw(right_cone_shape);
+
 
         pred.frame(prey);
 
