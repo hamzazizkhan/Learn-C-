@@ -6,7 +6,7 @@
 #include <random>
 #include <optional>
 
-constexpr float edge_turn_factor {1.0f};
+constexpr float edge_turn_factor {0.05f};
 
 float leftmargin{100.0f};
 float bottommargin{500.0f};
@@ -88,7 +88,7 @@ private:
         std::random_device rd;
         std::mt19937 gen(rd());
 
-        std::uniform_real_distribution<float> dist(-0.1f, 0.1f);
+        std::uniform_real_distribution<float> dist(-0.05f, 0.05f);
 
         float new_turn_factor = dist(gen);
 
@@ -175,8 +175,12 @@ private:
     void UpdateVelocity(static_prey prey)
     {
         if (PreyDetection(prey)){
-            // chagne angle to point toward prey
+            // change angle to point toward prey
             attraction(prey);
+            // change speed
+            speed = attraction_speed;
+        }else{
+            speed = original_speed;
         }
 
         vx = std::cos(angle) * speed;
@@ -186,14 +190,6 @@ private:
     void attraction(static_prey prey){
         float direction_vec_x = prey.x - x;
         float direction_vec_y = prey.y - y;
-
-        // float normalised_direction_vec_x;
-        // float normalised_direction_vec_y;
-
-        // float length = std::sqrt((direction_vec_x * direction_vec_x) + (direction_vec_y + direction_vec_y));
-
-        // normalised_direction_vec_x = direction_vec_x/length;
-        // normalised_direction_vec_y = direction_vec_y/length;
 
         angle = std::atan2(direction_vec_y, direction_vec_x);
     }
@@ -212,6 +208,10 @@ public:
     const float cone_length;
     const float cone_width;
 
+    const float original_speed; 
+    float speed;
+    float attraction_speed;
+
     float cone_head_x;
     float cone_head_y;
     float left_cone_x;
@@ -227,7 +227,6 @@ public:
     float angle;
     float constant_angle;
 
-    float speed;
     float turn_factor;
     float attraction_scale;
 
@@ -241,6 +240,7 @@ public:
                                                                                    y(start_y),
                                                                                    angle(start_angle),
                                                                                    speed(start_speed),
+                                                                                   original_speed(start_speed),
                                                                                     constant_angle(start_angle),
                                                                                    left_x(-25.0f),
                                                                                    left_y(25.0f),
@@ -249,10 +249,11 @@ public:
                                                                                    width(25.0f),
                                                                                    height(25.0f),
                                                                                    wing_size(10.0f),
-                                                                                   turn_factor(0.2f),
-                                                                                   cone_length(100.0f),
-                                                                                   cone_width(0.5f),
-                                                                                   attraction_scale(0.02f)
+                                                                                   turn_factor(0.3f),
+                                                                                   cone_length(200.0f),
+                                                                                   cone_width(1.0f),
+                                                                                   attraction_scale(0.02f),
+                                                                                   attraction_speed(speed + 0.5f)
     {
         InitialVelocityUpdate();
 
@@ -353,7 +354,8 @@ public:
 
 };
 
- 
+
+
 
 
 
