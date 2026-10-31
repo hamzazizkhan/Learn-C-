@@ -175,31 +175,27 @@ private:
     void UpdateVelocity(static_prey prey)
     {
         if (PreyDetection(prey)){
-            std::vector<float> attraction_vector = attraction(prey);
-
-            vx = vx + (attraction_vector[0] * speed);
-            vy = vy + (attraction_vector[1] * speed);
-
-            return;
+            // chagne angle to point toward prey
+            attraction(prey);
         }
 
         vx = std::cos(angle) * speed;
         vy = std::sin(angle) * speed;
     }
 
-    std::vector<float> attraction(static_prey prey){
+    void attraction(static_prey prey){
         float direction_vec_x = prey.x - x;
         float direction_vec_y = prey.y - y;
 
-        float normalised_direction_vec_x = direction_vec_x * attraction_scale;
-        float normalised_direction_vec_y = direction_vec_y * attraction_scale;
+        // float normalised_direction_vec_x;
+        // float normalised_direction_vec_y;
 
-        float length = std::sqrt((direction_vec_x * direction_vec_x) + (direction_vec_y + direction_vec_y));
+        // float length = std::sqrt((direction_vec_x * direction_vec_x) + (direction_vec_y + direction_vec_y));
 
-        normalised_direction_vec_x = direction_vec_x/length;
-        normalised_direction_vec_y = direction_vec_y/length;
+        // normalised_direction_vec_x = direction_vec_x/length;
+        // normalised_direction_vec_y = direction_vec_y/length;
 
-        return std::vector<float> {normalised_direction_vec_x, normalised_direction_vec_y};
+        angle = std::atan2(direction_vec_y, direction_vec_x);
     }
 
 
