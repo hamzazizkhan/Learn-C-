@@ -233,8 +233,6 @@ private:
 
         if (squared_distance <= prey.radius){
             prey_dead = true;
-        }else{
-            prey_dead = false;
         }
 
     }
