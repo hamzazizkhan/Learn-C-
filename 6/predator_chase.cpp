@@ -8,6 +8,8 @@
 
 constexpr float edge_turn_factor {0.05f};
 
+class predator;
+
 float leftmargin{100.0f};
 float bottommargin{500.0f};
 float rightmargin{700.0f};
@@ -23,18 +25,118 @@ float Length(float x, float y){
 class static_prey
 {
 private:
+    void InitialVelocityUpdate()
+    {
+        vx = std::cos(angle) * speed;
+        vy = std::sin(angle) * speed;
+    }
+
+    void ScreenEdge()
+    {
+        float dx = 0.0f;
+        float dy = 0.0f;
+
+        if (x < leftmargin)
+            dx = 1.0f;
+
+        if (x > rightmargin)
+            dx = -1.0f;
+
+        if (y < topmargin)
+            dy = 1.0f;
+
+        if (y > bottommargin)
+            dy = -1.0f;
+
+        if (dx != 0.0f || dy != 0.0f)
+        {
+            angle = std::atan2(dy, dx) + edge_turn_factor;
+            InitialVelocityUpdate();
+        }
+    }
+
+    float GenerateRandomTurnFactor(){
+        std::random_device rd;
+        std::mt19937 gen(rd());
+
+        std::uniform_real_distribution<float> dist(-0.05f, 0.05f);
+
+        float new_turn_factor = dist(gen);
+
+        return new_turn_factor;
+    }
+
+    void UpdateTurnFactor(){
+        turn_factor = GenerateRandomTurnFactor(); 
+    }
+
+    void UpdateRandomAngle()
+    {
+        UpdateTurnFactor();
+        angle = angle + turn_factor;
+    }
+
+    
+
+
+    void UpdateVelocity(predator& pred)
+    {
+        PredatorDetection(pred);
+        if (pred_detected){
+            // change angle to point toward prey
+            repulsion(pred);
+            // change speed
+            speed = attraction_speed;
+        }else{
+            speed = original_speed;
+        }
+
+        vx = std::cos(angle) * speed;
+        vy = std::sin(angle) * speed;
+    }
+
+
+    void UpdatePosition()
+    {
+        x = x + vx;
+        y = y + vy;
+    }
+
 public:
     float x;
     float y;
 
     float radius;
     float death_radius;
+    float visual_radius;
 
-    static_prey(float start_x, float start_y) : x(start_x),
+    float turn_factor;
+    float angle;
+
+    const float original_speed; 
+    float speed;
+    float attraction_speed;
+
+    float constant_angle;
+
+    float vx;
+    float vy;
+
+    bool pred_detected;
+
+    static_prey(float start_x, float start_y, float start_speed) : x(start_x),
                                                 y(start_y),
+                                                speed(start_speed),
+                                                original_speed(start_speed),
+                                                attraction_speed(speed + 0.5f),
                                                 radius(20.0f),
-                                                death_radius(10.0f)
+                                                death_radius(10.0f),
+                                                visual_radius(100.0f),
+                                                turn_factor(0.3f),
+                                                pred_detected(false),
+                                                angle(45.0f)
     {
+        angle = angle * M_PI/180.0f;
     }
 
     sf::CircleShape PreyShape(){
@@ -51,6 +153,7 @@ public:
 
         return circle_static_prey;
     }
+
     sf::CircleShape DeathRadiusShape (){
 
         sf::Vector2<float> prey_pos = {
@@ -68,6 +171,36 @@ public:
         return prey_death_radius;
     }
 
+    sf::CircleShape VisualRadiusShape (){
+
+        sf::Vector2<float> prey_pos = {
+            x,
+            y};
+
+        sf::CircleShape prey_visual_radius(visual_radius);
+        prey_visual_radius.setOrigin({visual_radius, visual_radius});
+        prey_visual_radius.setPosition(prey_pos);
+
+        prey_visual_radius.setFillColor(sf::Color::Transparent);
+        prey_visual_radius.setOutlineColor(sf::Color::Red);
+        prey_visual_radius.setOutlineThickness(2.f);
+
+        return prey_visual_radius;
+    }
+
+    void PredatorDetection(predator& pred);
+
+    void repulsion(predator& pred);
+
+    void frame(predator& pred)
+    {
+        // if (!pred_detected){
+        //     UpdateRandomAngle();
+        // }
+        UpdateVelocity(pred);
+        ScreenEdge();
+        UpdatePosition();
+    }
 };
 
 // predator class
@@ -76,33 +209,26 @@ class predator
 private:
     void ScreenEdge()
     {
-        float length;
+        float dx = 0.0f;
+        float dy = 0.0f;
 
         if (x < leftmargin)
-        {
-            angle = angle + edge_turn_factor;
-            InitialVelocityUpdate();
-        }
+            dx = 1.0f;
 
         if (x > rightmargin)
-        {
-            angle = angle + edge_turn_factor;
-            InitialVelocityUpdate();
-        }
-
-        if (y > bottommargin)
-        {
-            angle = angle + edge_turn_factor;
-            InitialVelocityUpdate();
-        }
+            dx = -1.0f;
 
         if (y < topmargin)
+            dy = 1.0f;
+
+        if (y > bottommargin)
+            dy = -1.0f;
+
+        if (dx != 0.0f || dy != 0.0f)
         {
-            angle = angle + edge_turn_factor;
+            angle = std::atan2(dy, dx) + edge_turn_factor;
             InitialVelocityUpdate();
         }
-        
-
     }
 
     float GenerateRandomAngle()
@@ -231,7 +357,7 @@ private:
     void UpdatePreyDead(static_prey& prey){
         float squared_distance = std::pow(x - prey.x, 2) + std::pow(y - prey.y, 2);
 
-        if (squared_distance <= prey.radius){
+        if (squared_distance <= prey.death_radius){
             prey_dead = true;
         }
 
@@ -401,6 +527,22 @@ public:
 };
 
 
+void static_prey:: PredatorDetection(predator& pred){
+    float squared_distance = std::pow(x - pred.x, 2) + std::pow(y - pred.y, 2);
+
+    pred_detected = squared_distance <= visual_radius * visual_radius ;
+}
+
+void static_prey::repulsion(predator& pred){
+    float direction_vec_x =  x - pred.x ;
+    float direction_vec_y =  y - pred.y ;
+
+    angle = std::atan2(direction_vec_y, direction_vec_x);
+}
+
+
+
+
 
 
 
@@ -414,11 +556,11 @@ int main()
 
     float init_x = 400.0f;
     float init_y = 300.0f;
-    float init_speed = 1.0f;
+    float init_speed = 0.5f;
 
     predator pred(init_x, init_y, radians, init_speed);
 
-    static_prey prey(250.0f, 250.0f);
+    static_prey prey(250.0f, 250.0f, init_speed);
 
     sf::RenderWindow window(
         sf::VideoMode({800, 600}),
@@ -446,11 +588,13 @@ int main()
         // prey
         sf::CircleShape circle_static_prey = prey.PreyShape();
         sf::CircleShape prey_death_radius = prey.DeathRadiusShape();
+        sf::CircleShape prey_visual_radius = prey.VisualRadiusShape();
 
         // drawing
         if (!pred.prey_dead){
             window.draw(circle_static_prey);
             window.draw(prey_death_radius);
+            window.draw(prey_visual_radius);
         }
 
         window.draw(predator_shape);
@@ -459,6 +603,7 @@ int main()
 
 
         pred.frame(prey);
+        prey.frame(pred);
 
         window.display();
     }

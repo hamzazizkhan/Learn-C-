@@ -33,6 +33,7 @@ COMPLETE
 ===========================================================================================================
 1. attraction when prey in visual cone.
 2. speed up when prey in visual cone.
+3. kill prey when predator enters prey death radius.
 
 ===========================================================================================================
 PREDATOR
