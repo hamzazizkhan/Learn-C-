@@ -31,26 +31,31 @@ private:
         vy = std::sin(angle) * speed;
     }
 
-    void ScreenEdge()
+    void CheckScreenEdge()
     {
-        float dx = 0.0f;
-        float dy = 0.0f;
+        edge_dx = 0.0f;
+        edge_dy = 0.0f;
 
         if (x < leftmargin)
-            dx = 1.0f;
+            edge_dx = 1.0f;
 
         if (x > rightmargin)
-            dx = -1.0f;
+            edge_dx = -1.0f;
 
         if (y < topmargin)
-            dy = 1.0f;
+            edge_dy = 1.0f;
 
         if (y > bottommargin)
-            dy = -1.0f;
+            edge_dy = -1.0f;
 
-        if (dx != 0.0f || dy != 0.0f)
+    }
+
+
+    void ScreenEdge()
+    {
+        if (edge_dx != 0.0f || edge_dy != 0.0f)
         {
-            angle = std::atan2(dy, dx) + edge_turn_factor;
+            angle = std::atan2(edge_dy, edge_dx) + edge_turn_factor;
             InitialVelocityUpdate();
         }
     }
@@ -76,20 +81,40 @@ private:
         angle = angle + turn_factor;
     }
 
-    
+    void UpdateAngleAndSpeed(predator& pred){
+        // case when not in edge and pred detected
+        if(edge_dx == 0.0f and edge_dy == 0.0f){
+            if (pred_detected){
+                // change angle to point toward prey
+                repulsion(pred);
+                // change speed
+                speed = attraction_speed;
+            }else{
+                speed = original_speed;
+            }
+        }
+
+        // case when on edge
+        if (edge_dx != 0.0f || edge_dy != 0.0f)
+        {
+            angle = std::atan2(edge_dy, edge_dx) + 0.1f;
+            // InitialVelocityUpdate();
+        }
+    }
 
 
     void UpdateVelocity(predator& pred)
     {
-        PredatorDetection(pred);
-        if (pred_detected){
-            // change angle to point toward prey
-            repulsion(pred);
-            // change speed
-            speed = attraction_speed;
-        }else{
-            speed = original_speed;
-        }
+        // if(edge_dx == 0.0f and edge_dy == 0.0f){
+        //     if (pred_detected){
+        //         // change angle to point toward prey
+        //         repulsion(pred);
+        //         // change speed
+        //         speed = attraction_speed;
+        //     }else{
+        //         speed = original_speed;
+        //     }
+        // }
 
         vx = std::cos(angle) * speed;
         vy = std::sin(angle) * speed;
@@ -122,7 +147,11 @@ public:
     float vx;
     float vy;
 
+    float edge_dx;
+    float edge_dy;
+
     bool pred_detected;
+
 
     static_prey(float start_x, float start_y, float start_speed) : x(start_x),
                                                 y(start_y),
@@ -194,11 +223,11 @@ public:
 
     void frame(predator& pred)
     {
-        // if (!pred_detected){
-        //     UpdateRandomAngle();
-        // }
+        CheckScreenEdge();
+        PredatorDetection(pred);
+        UpdateAngleAndSpeed(pred);
         UpdateVelocity(pred);
-        ScreenEdge();
+        // ScreenEdge();
         UpdatePosition();
     }
 };
