@@ -97,7 +97,7 @@ private:
         // case when on edge
         if (edge_dx != 0.0f || edge_dy != 0.0f)
         {
-            angle = std::atan2(edge_dy, edge_dx) + 0.1f;
+            angle = std::atan2(edge_dy, edge_dx) + 5.0f;
             // InitialVelocityUpdate();
         }
     }
