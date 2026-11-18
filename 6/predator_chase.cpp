@@ -105,16 +105,6 @@ private:
 
     void UpdateVelocity(predator& pred)
     {
-        // if(edge_dx == 0.0f and edge_dy == 0.0f){
-        //     if (pred_detected){
-        //         // change angle to point toward prey
-        //         repulsion(pred);
-        //         // change speed
-        //         speed = attraction_speed;
-        //     }else{
-        //         speed = original_speed;
-        //     }
-        // }
 
         vx = std::cos(angle) * speed;
         vy = std::sin(angle) * speed;
@@ -157,7 +147,7 @@ public:
                                                 y(start_y),
                                                 speed(start_speed),
                                                 original_speed(start_speed),
-                                                attraction_speed(speed + 0.5f),
+                                                attraction_speed(speed + 1.0f),
                                                 radius(20.0f),
                                                 death_radius(10.0f),
                                                 visual_radius(100.0f),
@@ -227,7 +217,6 @@ public:
         PredatorDetection(pred);
         UpdateAngleAndSpeed(pred);
         UpdateVelocity(pred);
-        // ScreenEdge();
         UpdatePosition();
     }
 };
@@ -386,7 +375,7 @@ private:
     void UpdatePreyDead(static_prey& prey){
         float squared_distance = std::pow(x - prey.x, 2) + std::pow(y - prey.y, 2);
 
-        if (squared_distance <= prey.death_radius){
+        if (squared_distance <= (prey.death_radius * prey.death_radius)){
             prey_dead = true;
         }
 
@@ -452,7 +441,7 @@ public:
                                                                                    cone_length(200.0f),
                                                                                    cone_width(1.0f),
                                                                                    attraction_scale(0.02f),
-                                                                                   attraction_speed(speed + 0.5f),
+                                                                                   attraction_speed(speed + 1.2f),
                                                                                    prey_dead(false)
     {
         InitialVelocityUpdate();
